@@ -22,6 +22,12 @@ class Config:
         self.trading_interval_minutes = None
         self.slippage = None  # BPS
         self.computeUnitPriceMicroLamports = None
+        self.stoploss = None
+        self.trailing_stoploss = None
+        self.trailing_stoploss_target = None
+        self.telegram = None
+        self.tg_bot_token = None
+        self.tg_bot_uid = None
         self.load_config()
 
     def load_config(self):
@@ -42,6 +48,16 @@ class Config:
                 self.trading_interval_minutes = int(config_data.get("trading_interval_minutes", 1))
                 self.slippage = int(config_data.get("slippage", 50))
                 self.computeUnitPriceMicroLamports = int(config_data.get("computeUnitPriceMicroLamports", 20 * 14000))  # default fee of roughly $.04 today
+                self.verbose = config_data.get("verbose", False)
+                self.strategy = config_data.get("strategy", "default")
+                self.stoploss = config_data["stoploss"]
+                self.trailing_stoploss = config_data["trailing_stoploss"]
+                self.trailing_stoploss_target = config_data["trailing_stoploss_target"]
+                self.telegram = config_data.get("telegram", False)
+                if self.telegram == True:
+                    self.tg_bot_token = config_data["tg_bot_token"]
+                    self.tg_bot_uid = config_data["tg_bot_uid"]
+                # print(len(self.private_key), self.private_key)
             except json.JSONDecodeError as e:
                 log_general.error(f"Error parsing JSON: {e}")
                 exit(1)
@@ -52,7 +68,11 @@ class Config:
     @property
     def keypair(self):
         try:
-            return Keypair.from_bytes(base58.b58decode(self.private_key))
+            b58_string = self.private_key
+            keypair = Keypair.from_base58_string(b58_string)
+            # print(f"Using Wallet: {keypair.pubkey()}")
+
+            return keypair
         except Exception as e:
             log_general.error(f"Error decoding private key: {e}")
             exit(1)
